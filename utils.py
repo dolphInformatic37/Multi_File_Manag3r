@@ -1,3 +1,5 @@
+import os
+
 # Funzione per ottenere l'estensione di un file
 def get_file_extension(file_path):
     """

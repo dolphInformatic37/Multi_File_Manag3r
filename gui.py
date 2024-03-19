@@ -1,8 +1,32 @@
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog
-from file_operations import add_suffix_prefix_to_files
-from data_processing import sort_files_by_name
+
+class MainWindow:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Finestra Principale")
+        
+        self.main_frame = tk.Frame(self.root)
+        self.main_frame.pack(padx=300, pady=300)
+        
+        self.label = tk.Label(self.main_frame, text="Benvenuto nella Finestra Principale")
+        self.label.pack(pady=10)
+        
+        self.button = tk.Button(self.main_frame, text="Apri Gestore di File", command=self.open_file_manager)
+        self.button.pack(pady=10)
+
+    def open_file_manager(self):
+        # Nasconde temporaneamente la finestra principale
+        self.root.withdraw()
+        # Crea una nuova finestra per il FileManagerApp
+        file_manager_window = tk.Toplevel()
+        file_manager_window.title("Gestore di File")
+        FileManagerApp(file_manager_window)
+        
+        # Attende che la nuova finestra venga chiusa per riaprire la finestra principale
+        file_manager_window.wait_window()
+        self.root.deiconify()
 
 class FileManagerApp:
     def __init__(self, root):
@@ -76,7 +100,7 @@ class FileManagerApp:
         file_paths = filedialog.askopenfilenames()
         if file_paths:
             # Ordina i file selezionati in ordine alfabetico
-            file_paths_sorted = sort_files_by_name(file_paths)
+            file_paths_sorted = sorted(file_paths)
             for file_path in file_paths_sorted:
                 file_name = os.path.basename(file_path)
                 if file_name in self.file_path_map:
@@ -106,7 +130,7 @@ class FileManagerApp:
             option = self.selected_option.get()  # Ottieni l'opzione selezionata
             if option == "prefisso":
                 new_name = f"{new_name}{file_path}"
-            else:  # Se l'opzione è suffisso
+            else:  # option == "suffisso"
                 base_name, extension = os.path.splitext(file_path)
                 new_name = f"{base_name}{new_name}{extension}"
             self.file_tree.item(selected_item, values=(file_path, new_name))
@@ -114,32 +138,6 @@ class FileManagerApp:
     def remove_selected(self):
         for selected_item in self.file_tree.selection():
             self.file_tree.delete(selected_item)
-
-class MainWindow:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Finestra Principale")
-        
-        self.main_frame = tk.Frame(self.root)
-        self.main_frame.pack(padx=300, pady=300)
-        
-        self.label = tk.Label(self.main_frame, text="Benvenuto nella Finestra Principale")
-        self.label.pack(pady=10)
-        
-        self.button = tk.Button(self.main_frame, text="Apri Gestore di File", command=self.open_file_manager)
-        self.button.pack(pady=10)
-
-    def open_file_manager(self):
-        # Nasconde temporaneamente la finestra principale
-        self.root.withdraw()
-        # Crea una nuova finestra per il FileManagerApp
-        file_manager_window = tk.Toplevel()
-        file_manager_window.title("Gestore di File")
-        FileManagerApp(file_manager_window)
-        
-        # Attende che la nuova finestra venga chiusa per riaprire la finestra principale
-        file_manager_window.wait_window()
-        self.root.deiconify()
 
 def main():
     root = tk.Tk()
