@@ -1,6 +1,6 @@
-import os
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox, simpledialog
+import os
 
 class MainWindow:
     def __init__(self, root):
@@ -63,6 +63,15 @@ class FileManagerApp:
         self.suffix_prefix_entry = tk.Entry(top_frame)
         self.suffix_prefix_entry.pack(padx=10)
 
+        # Variabile per tenere traccia del valore precedente della Entry
+        self.previous_entry_value = tk.StringVar(value="")  # Inizialmente vuoto
+
+        # Aggiungi una funzione di callback per aggiornare l'anteprima in tempo reale
+        self.suffix_prefix_entry.bind("<KeyRelease>", self.update_preview)
+
+        # Variabile per tenere traccia delle modifiche proposte
+        self.proposed_changes = {}
+
         # Etichetta per la scelta prefisso/suffisso
         self.suffix_prefix_label = tk.Label(top_frame, text="Scegli tra prefisso e suffisso:")
         self.suffix_prefix_label.pack(padx=10, pady=(10, 0))
@@ -77,7 +86,7 @@ class FileManagerApp:
         self.suffix_radio.pack(padx=10)
 
         # Bottone per applicare le modifiche
-        self.apply_change_button = tk.Button(top_frame, text="Applica Modifiche", command=self.apply_changes)
+        self.apply_change_button = tk.Button(top_frame, text="Applica Modifiche", command=self.confirm_changes)
         self.apply_change_button.pack(padx=10, pady=(10, 0))
 
         # Frame per la parte inferiore (seleziona file e rimuovi selezionato)
@@ -97,47 +106,162 @@ class FileManagerApp:
         self.back_button.pack(side=tk.BOTTOM, pady=20)
 
     def select_files(self):
+        """
+        Permette all'utente di selezionare i file e li aggiunge alla Treeview.
+        """
+        # Verifica se la finestra di dialogo è già aperta
+        if getattr(self, "_file_dialog_open", False):
+            # Mostra un messaggio informativo se la finestra di dialogo è già aperta
+            messagebox.showinfo("Finestra di selezione già aperta", "La finestra per la selezione dei file è già aperta.")
+            return
+
+        # Imposta la variabile di controllo per indicare che la finestra di dialogo è aperta
+        self._file_dialog_open = True
+
+        # Crea la finestra di dialogo per la selezione dei file
         file_paths = filedialog.askopenfilenames()
+
+        # Ripristina la variabile di controllo dopo la chiusura della finestra di dialogo
+        self._file_dialog_open = False
+
         if file_paths:
-            # Ordina i file selezionati in ordine alfabetico
-            file_paths_sorted = sorted(file_paths)
-            for file_path in file_paths_sorted:
+            # Lista per tenere traccia dei nomi dei file duplicati
+            duplicate_files = []
+
+            for file_path in file_paths:
                 file_name = os.path.basename(file_path)
+
+                # Controlla se il file è già presente
                 if file_name in self.file_path_map:
-                    base_name, ext = os.path.splitext(file_name)
-                    i = 1
-                    new_file_name = f"{base_name}_{i}{ext}"
-                    while new_file_name in self.file_path_map:
-                        i += 1
-                        new_file_name = f"{base_name}_{i}{ext}"
-                    file_name = new_file_name
+                    duplicate_files.append(file_name)
+                    continue
+
+                # Altrimenti, aggiungi il file alla Treeview
                 self.file_path_map[file_name] = file_path
                 self.file_tree.insert('', tk.END, values=(file_name, ''))
 
-            # Imposta l'altezza del Treeview in base al numero di file selezionati
-            num_files = len(self.file_tree.get_children())
-            if num_files > 10:
-                self.file_tree['height'] = 10  # Limita il numero di righe visualizzate a 10
-                self.scrollbar.pack(side='right', fill='y') # Mostra lo scrollbar
-            else:
-                self.file_tree['height'] = num_files + 1 # Seleziona il numero di righe nella Treeview
-                self.scrollbar.pack_forget() # Nascondi lo scrollbar quando non è necessario
+            # Aggiorna l'anteprima delle modifiche
+            self.update_preview(None)
+
+            # Se ci sono nomi duplicati, mostra una finestra pop-up
+            if duplicate_files:
+                self.show_duplicate_files_popup(duplicate_files)
+
+            # Aggiorna l'altezza della Treeview
+            self.update_treeview_height()
+
+    def get_unique_file_name(self, base_name, ext):
+        """
+        Restituisce un nome di file unico evitando duplicati.
+
+        Args:
+            base_name (str): Nome di base del file.
+            ext (str): Estensione del file.
+
+        Returns:
+            str: Nome di file unico.
+        """
+        new_file_name = f"{base_name}{ext}"
+        i = 1
+        while new_file_name in self.file_path_map:
+            new_file_name = f"{base_name}_{i}{ext}"
+            i += 1
+        return new_file_name
+    
+    def show_duplicate_files_popup(self, duplicate_files):
+        """
+        Mostra una finestra pop-up per avvertire l'utente dei file duplicati.
+        
+        Args:
+            duplicate_files (list): Lista dei nomi dei file duplicati.
+        """
+        message = "I seguenti file sono già stati selezionati:\n\n"
+        for file_name in duplicate_files:
+            message += f"- {file_name}\n"
+        messagebox.showwarning("File duplicati", message)
+    
+    def update_treeview_height(self):
+        """
+        Aggiorna l'altezza della Treeview in base al numero di file rimanenti.
+        """
+        num_files = len(self.file_tree.get_children())
+        if num_files > 10:
+            self.file_tree['height'] = 10  # Limita il numero di righe visualizzate a 10
+            self.scrollbar.pack(side='right', fill='y')  # Mostra lo scrollbar
+        else:
+            self.file_tree['height'] = num_files + 1  # Seleziona il numero di righe nella Treeview
+            self.scrollbar.pack_forget()  # Nascondi lo scrollbar quando non è necessario
+
+    def update_preview(self, event):
+        # Ottieni il testo inserito nella Entry
+        text = self.suffix_prefix_entry.get()
+
+        # Ottieni l'opzione selezionata
+        option = self.selected_option.get()
+
+        # Aggiorna l'anteprima delle modifiche
+        for item_id in self.file_tree.get_children():
+            old_name = self.file_tree.item(item_id, "values")[0]
+            new_name = ""
+
+            # Applica le modifiche proposte in base all'opzione selezionata
+            if option == "prefisso":
+                new_name = f"{text}{old_name}"
+            else:  # option == "suffisso"
+                base_name, extension = os.path.splitext(old_name)
+                new_name = f"{base_name}{text}{extension}"
+
+            # Aggiorna l'anteprima delle modifiche direttamente nella Treeview
+            self.file_tree.item(item_id, values=(old_name, new_name))
+
+            # Aggiorna il dizionario delle modifiche proposte
+            self.proposed_changes[item_id] = (old_name, new_name)
+
+    def confirm_changes(self):
+        # Controlla se ci sono file selezionati nella Treeview
+        if not self.file_tree.get_children():
+            messagebox.showwarning("Nessun file selezionato", "Non ci sono file da modificare.")
+            return
+
+        # Crea una finestra di conferma
+        confirmation_window = tk.Toplevel(self.root)
+        confirmation_window.title("Conferma modifiche")
+
+        # Etichetta di conferma
+        confirmation_label = tk.Label(confirmation_window, text="Vuoi confermare le modifiche?")
+        confirmation_label.pack(padx=80, pady=20)
+
+        # Frame per i pulsanti
+        button_frame = tk.Frame(confirmation_window)
+        button_frame.pack(padx=20, pady=10)
+
+        # Bottone per confermare
+        confirm_button = tk.Button(button_frame, text=" Si ", command=self.apply_changes)
+        confirm_button.pack(side=tk.LEFT, padx=10)
+
+        # Bottone per annullare
+        cancel_button = tk.Button(button_frame, text=" No ", command=confirmation_window.destroy)
+        cancel_button.pack(side=tk.RIGHT, padx=10)
 
     def apply_changes(self):
-        for selected_item in self.file_tree.selection():
-            file_path = self.file_tree.item(selected_item)['values'][0]
-            new_name = self.suffix_prefix_entry.get()
-            option = self.selected_option.get()  # Ottieni l'opzione selezionata
-            if option == "prefisso":
-                new_name = f"{new_name}{file_path}"
-            else:  # option == "suffisso"
-                base_name, extension = os.path.splitext(file_path)
-                new_name = f"{base_name}{new_name}{extension}"
-            self.file_tree.item(selected_item, values=(file_path, new_name))
+        # Applica le modifiche confermate ai nomi dei file
+        for item_id, (old_name, new_name) in self.proposed_changes.items():
+            self.file_tree.item(item_id, values=(old_name, new_name))
+
+        # Chiude la finestra di conferma
+        self.root.focus_set()  # Torna alla finestra principale
+        messagebox.showinfo("Modifiche applicate", "Le modifiche sono state applicate con successo.")
+        self.proposed_changes = {}  # Resetta il dizionario delle modifiche proposte
 
     def remove_selected(self):
+        """
+        Rimuove i file selezionati dalla Treeview.
+        """
         for selected_item in self.file_tree.selection():
             self.file_tree.delete(selected_item)
+
+        # Aggiorna l'altezza della Treeview dopo la rimozione dei file
+        self.update_treeview_height()
 
 def main():
     root = tk.Tk()
