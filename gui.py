@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, simpledialog
 import os
 
+from file_operations import add_suffix_prefix_to_files
+
 class MainWindow:
     def __init__(self, root):
         self.root = root
@@ -244,14 +246,28 @@ class FileManagerApp:
         cancel_button.pack(side=tk.RIGHT, padx=10)
 
     def apply_changes(self):
-        # Applica le modifiche confermate ai nomi dei file
-        for item_id, (old_name, new_name) in self.proposed_changes.items():
-            self.file_tree.item(item_id, values=(old_name, new_name))
+        # Ottieni il testo inserito nell'Entry per prefisso/suffisso
+        text = self.suffix_prefix_entry.get()
 
-        # Chiude la finestra di conferma
-        self.root.focus_set()  # Torna alla finestra principale
+        # Ottieni l'opzione selezionata per prefisso/suffisso
+        option = self.selected_option.get()
+
+        # Crea una lista di percorsi dei file selezionati
+        file_paths = list(self.file_path_map.values())
+
+        # Applica i prefissi o i suffissi ai nomi dei file utilizzando la funzione definita nell'altro script
+        modified_file_paths = add_suffix_prefix_to_files(file_paths, text, option)
+
+        # Aggiorna la visualizzazione nella Treeview con i nuovi nomi dei file
+        for item_id, new_name in zip(self.file_path_map.keys(), modified_file_paths):
+            self.file_tree.item(item_id, values=(self.file_tree.item(item_id, "values")[0], new_name))
+
+        # Mostra un messaggio informativo
         messagebox.showinfo("Modifiche applicate", "Le modifiche sono state applicate con successo.")
-        self.proposed_changes = {}  # Resetta il dizionario delle modifiche proposte
+
+        # Resetta il dizionario delle modifiche proposte
+        self.proposed_changes = {}
+
 
     def remove_selected(self):
         """
