@@ -3,7 +3,6 @@ The Multi-File Manager is a Python-based tool designed to simplify file manageme
 
 ## Features
 
-- Rename multiple files simultaneously
 - Add prefixes, suffixes, and/or infixes to file names
 - User-friendly graphical interface
 
