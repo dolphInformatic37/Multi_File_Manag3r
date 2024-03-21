@@ -1,34 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, simpledialog
+from tkinter import ttk, filedialog, messagebox
 import os
 
 from file_operations import add_suffix_prefix_to_files
-
-class MainWindow:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Finestra Principale")
-        
-        self.main_frame = tk.Frame(self.root)
-        self.main_frame.pack(padx=300, pady=300)
-        
-        self.label = tk.Label(self.main_frame, text="Benvenuto nella Finestra Principale")
-        self.label.pack(pady=10)
-        
-        self.button = tk.Button(self.main_frame, text="Apri Gestore di File", command=self.open_file_manager)
-        self.button.pack(pady=10)
-
-    def open_file_manager(self):
-        # Nasconde temporaneamente la finestra principale
-        self.root.withdraw()
-        # Crea una nuova finestra per il FileManagerApp
-        file_manager_window = tk.Toplevel()
-        file_manager_window.title("Gestore di File")
-        FileManagerApp(file_manager_window)
-        
-        # Attende che la nuova finestra venga chiusa per riaprire la finestra principale
-        file_manager_window.wait_window()
-        self.root.deiconify()
 
 class FileManagerApp:
     def __init__(self, root):
@@ -259,15 +233,15 @@ class FileManagerApp:
         modified_file_paths = add_suffix_prefix_to_files(file_paths, text, option)
 
         # Aggiorna la visualizzazione nella Treeview con i nuovi nomi dei file
-        for item_id, new_name in zip(self.file_path_map.keys(), modified_file_paths):
-            self.file_tree.item(item_id, values=(self.file_tree.item(item_id, "values")[0], new_name))
+        for item_id, new_file_path in zip(self.file_tree.get_children(), modified_file_paths):
+            old_name = self.file_tree.item(item_id, "values")[0]
+            self.file_tree.item(item_id, values=(old_name, os.path.basename(new_file_path)))
 
         # Mostra un messaggio informativo
         messagebox.showinfo("Modifiche applicate", "Le modifiche sono state applicate con successo.")
 
         # Resetta il dizionario delle modifiche proposte
         self.proposed_changes = {}
-
 
     def remove_selected(self):
         """
@@ -279,10 +253,3 @@ class FileManagerApp:
         # Aggiorna l'altezza della Treeview dopo la rimozione dei file
         self.update_treeview_height()
 
-def main():
-    root = tk.Tk()
-    app = MainWindow(root)
-    root.mainloop()
-
-if __name__ == "__main__":
-    main()
