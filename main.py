@@ -4,12 +4,12 @@ from file_manager import FileManagerApp
 class MainWindow:
     def __init__(self, root):
         self.root = root
-        self.root.title("Finestra Principale")
+        self.root.title("File prefixes and suffixes manager")
         
         self.main_frame = tk.Frame(self.root)
         self.main_frame.pack(padx=200, pady=100)
         
-        self.label = tk.Label(self.main_frame, text="Benvenuto nella Finestra Principale")
+        self.label = tk.Label(self.main_frame, text="Benvenuti")
         self.label.pack(pady=10)
         
         self.button = tk.Button(self.main_frame, text="Apri Gestore di File", command=self.open_file_manager)

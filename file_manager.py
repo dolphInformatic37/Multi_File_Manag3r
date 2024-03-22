@@ -199,29 +199,41 @@ class FileManagerApp:
             messagebox.showwarning("Nessun file selezionato", "Non ci sono file da modificare.")
             return
 
-        # Crea una finestra di conferma
-        confirmation_window = tk.Toplevel(self.root)
-        confirmation_window.title("Conferma modifiche")
+        # Crea una finestra di conferma e memorizzala come attributo dell'istanza
+        self.confirmation_window = tk.Toplevel(self.root)
+        self.confirmation_window.title("Conferma modifiche")
 
         # Etichetta di conferma
-        confirmation_label = tk.Label(confirmation_window, text="Vuoi confermare le modifiche?")
+        confirmation_label = tk.Label(self.confirmation_window, text="Vuoi confermare le modifiche?")
         confirmation_label.pack(padx=80, pady=20)
 
         # Frame per i pulsanti
-        button_frame = tk.Frame(confirmation_window)
+        button_frame = tk.Frame(self.confirmation_window)
         button_frame.pack(padx=20, pady=10)
 
         # Bottone per confermare
-        confirm_button = tk.Button(button_frame, text=" Si ", command=self.apply_changes)
+        confirm_button = tk.Button(button_frame, text=" Si ", command=self.apply_changes_and_close_confirmation)
         confirm_button.pack(side=tk.LEFT, padx=10)
 
         # Bottone per annullare
-        cancel_button = tk.Button(button_frame, text=" No ", command=confirmation_window.destroy)
+        cancel_button = tk.Button(button_frame, text=" No ", command=self.confirmation_window.destroy)
         cancel_button.pack(side=tk.RIGHT, padx=10)
+
+    def apply_changes_and_close_confirmation(self):
+        # Chiudi la finestra di conferma delle modifiche
+        self.confirmation_window.destroy()
+
+        # Chiamata alla funzione per applicare le modifiche
+        self.apply_changes()
 
     def apply_changes(self):
         # Ottieni il testo inserito nell'Entry per prefisso/suffisso
         text = self.suffix_prefix_entry.get()
+
+        # Verifica se la casella di testo è vuota
+        if not text:
+            messagebox.showwarning("Nessuna modifica", "Inserisci un prefisso o un suffisso prima di applicare le modifiche.")
+            return
 
         # Ottieni l'opzione selezionata per prefisso/suffisso
         option = self.selected_option.get()
@@ -236,7 +248,7 @@ class FileManagerApp:
         for item_id, new_file_path in zip(self.file_tree.get_children(), modified_file_paths):
             old_name = self.file_tree.item(item_id, "values")[0]
             self.file_tree.item(item_id, values=(old_name, os.path.basename(new_file_path)))
-
+            
         # Mostra un messaggio informativo
         messagebox.showinfo("Modifiche applicate", "Le modifiche sono state applicate con successo.")
 
@@ -252,4 +264,3 @@ class FileManagerApp:
 
         # Aggiorna l'altezza della Treeview dopo la rimozione dei file
         self.update_treeview_height()
-
