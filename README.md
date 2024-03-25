@@ -15,8 +15,7 @@ cd Multi_File_Manag3r
 
 ## Usage
 
-1. Run the Python script:
-python Multi_File_Manag3r.py
+1. Run the Python script
 2. Select a directory containing the files you want to manage.
 3. Enter a prefix, suffix, and/or infix as desired.
 4. Click the "Rename" button to apply the changes.
