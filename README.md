@@ -1,9 +1,9 @@
 # Multi_File_Manag3r
 The Multi-File Manager is a Python-based tool designed to simplify file management tasks. With its graphical interface, users can effortlessly navigate directories, select multiple files, and apply batch renaming operations with ease.
 
-## Features
+## Features (as of right now)
 
-- Add prefixes, suffixes, and/or infixes to file names
+- Add prefixes or suffixes to file names
 - User-friendly graphical interface
 
 ## Installation
@@ -17,7 +17,7 @@ cd Multi_File_Manag3r
 
 1. Run the Python script
 2. Select a directory containing the files you want to manage.
-3. Enter a prefix, suffix, and/or infix as desired.
+3. Enter a prefix or a suffix as desired.
 4. Click the "Rename" button to apply the changes.
 
 ## Contributing
