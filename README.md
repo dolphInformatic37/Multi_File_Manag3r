@@ -1,7 +1,7 @@
 # Multi_File_Manag3r
 The Multi-File Manager is a Python-based tool designed to simplify file management tasks. With its graphical interface, users can effortlessly navigate directories, select multiple files, and apply batch renaming operations with ease.
 
-## Features (as of right now)
+## Implemented Features
 
 - Add prefixes or suffixes to file names
 - User-friendly graphical interface
